@@ -1,0 +1,14 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "cargo" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"                # 设置提交信息的前缀
+    versioning-strategy: "increase"  # 控制更新的版本策略，默认是 increase, 也可以是 "increase-if-necessary" 或 "lockfile-only"
