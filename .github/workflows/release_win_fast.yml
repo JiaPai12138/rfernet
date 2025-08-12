@@ -58,11 +58,9 @@ jobs:
         run: |
           pip install rfernet --no-index --find-links target/wheels
 
-      - name: Upload combined wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: rfernet-win-pack-${{ matrix.python-version }}
-          path: ./target/wheels/*.whl
+      - name: Run tests
+        run: |
+          pytest tests/
 
   upload_all_wheels:
     name: Collect and upload all wheels
