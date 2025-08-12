@@ -9,7 +9,7 @@ on:
 
 
 jobs:
-  release_windows fast:
+  release_windows_fast:
     name: Build ${{ matrix.os }} Py${{ matrix.python-version }}
     strategy:
       matrix:
