@@ -1,0 +1,87 @@
+name: Release wheels for win fast
+on:
+  workflow_dispatch:
+  release:
+    types: [published, edited]
+  push:
+    tags:
+      - '*.*.*'
+
+
+jobs:
+  release_windows fast:
+    name: Build ${{ matrix.os }} Py${{ matrix.python-version }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache built wheels
+        uses: actions/cache@v4
+        with:
+          path: target/wheels
+          key: wheels-rfernet-${{ github.sha }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel twine
+          pip install -r requirements.txt
+
+      - name: Checkout OpenSSL precompiled binaries
+        uses: actions/checkout@v4
+        with:
+          repository: JiaPai12138/OpenSSL-Win64-Bin
+          path: OpenSSL-Win64
+          ref: main
+
+      - name: Set env for openssl-sys (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "OPENSSL_LIB_DIR=${{ github.workspace }}/OpenSSL-Win64/lib/VC/x64/MT" >> $env:GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=${{ github.workspace }}/OpenSSL-Win64/include" >> $env:GITHUB_ENV
+          echo "${{ github.workspace }}/OpenSSL-Win64/bin" >> $GITHUB_PATH
+
+      - name: Build wheels with maturin
+        run: |
+          maturin build --release --strip -i python --target x86_64-pc-windows-msvc
+
+      - name: Install built package
+        run: |
+          pip install rfernet --no-index --find-links target/wheels
+
+      - name: Upload combined wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: rfernet-win-pack-${{ matrix.python-version }}
+          path: ./target/wheels/*.whl
+
+  upload_all_wheels:
+    name: Collect and upload all wheels
+    needs: build_windows
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached wheels
+        uses: actions/cache@v4
+        with:
+          path: target/wheels
+          key: wheels-rfernet-${{ github.sha }}
+          restore-keys: |
+            wheels-rfernet-
+
+      - name: Upload all wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: rfernet-all-windows-wheels
+          path: ./target/wheels/*.whl

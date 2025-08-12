@@ -8,6 +8,17 @@ on:
 name: Tests & Linting
 
 jobs:
+  fmt_and_clippy:
+    name: Rustfmt + Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: 'clippy, rustfmt'
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+
   test:
     name: Test Suite
     strategy:
@@ -17,11 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+      - uses: dtolnay/rust-toolchain@stable
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -35,38 +42,6 @@ jobs:
       - run: pip install rfernet --no-index -f target/wheels
       - run: pytest tests/
 
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
-
   test_manylinux_release_x86_64:
       name: Test manylinux release build (x86_64)
       runs-on: ubuntu-latest
@@ -76,12 +51,9 @@ jobs:
       container: quay.io/pypa/manylinux_2_28_x86_64:latest
       steps:
         - uses: actions/checkout@v4
-        - uses: actions-rs/toolchain@v1
+        - uses: dtolnay/rust-toolchain@stable
           with:
-            profile: minimal
-            toolchain: stable
-            override: true
-            target: x86_64-unknown-linux-gnu
+            targets: x86_64-unknown-linux-gnu
         - run: yum makecache && yum -y install libffi-devel openssl-devel
         - run: /opt/python/${{ matrix.python-path }}/bin/python -m venv .venv
         - run: .venv/bin/pip install -U pip wheel
@@ -100,12 +72,9 @@ jobs:
       container: quay.io/pypa/manylinux_2_28_aarch64:latest
       steps:
         - uses: actions/checkout@v4
-        - uses: actions-rs/toolchain@v1
+        - uses: dtolnay/rust-toolchain@stable
           with:
-            profile: minimal
-            toolchain: stable
-            override: true
-            target: aarch64-unknown-linux-gnu
+            targets: aarch64-unknown-linux-gnu
         - run: yum makecache && yum -y install libffi-devel openssl-devel
         - run: /opt/python/${{ matrix.python-path }}/bin/python -m venv .venv
         - run: .venv/bin/pip install -U pip wheel
@@ -124,12 +93,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          target: ${{ matrix.target-arch }}
+          targets: ${{ matrix.target-arch }}
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
