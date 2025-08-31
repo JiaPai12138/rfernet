@@ -37,7 +37,7 @@ impl Fernet {
         Ok(fernet::Fernet::generate_key())
     }
 
-    fn decrypt(&self, py: Python, token: &str) -> PyResult<PyObject> {
+    fn decrypt(&self, py: Python, token: &str) -> PyResult<PyAny> {
         match self.fernet_.decrypt(token) {
             Err(_err) => Err(exc::DecryptionError::new_err(
                 "Decryption failed, token or key invalid.",
@@ -46,7 +46,7 @@ impl Fernet {
         }
     }
 
-    fn decrypt_with_ttl(&self, py: Python, token: &str, ttl_secs: u64) -> PyResult<PyObject> {
+    fn decrypt_with_ttl(&self, py: Python, token: &str, ttl_secs: u64) -> PyResult<PyAny> {
         match self.fernet_.decrypt_with_ttl(token, ttl_secs) {
             Err(_err) => Err(exc::DecryptionError::new_err(
                 "Decryption failed, token or key invalid.",
@@ -73,7 +73,7 @@ impl MultiFernet {
         Ok(self.fernet_.encrypt(data))
     }
 
-    fn decrypt(&self, py: Python, token: &str) -> PyResult<PyObject> {
+    fn decrypt(&self, py: Python, token: &str) -> PyResult<PyAny> {
         match self.fernet_.decrypt(token) {
             Err(_err) => Err(exc::DecryptionError::new_err(
                 "Decryption failed, token or key invalid.",
