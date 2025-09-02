@@ -42,7 +42,7 @@ impl Fernet {
             Err(_err) => Err(exc::DecryptionError::new_err(
                 "Decryption failed, token or key invalid.",
             )),
-            Ok(data) => Ok(PyBytes::new(py, &data).upcast()),
+            Ok(data) => Ok(PyBytes::new(py, &data).cast()),
         }
     }
 
@@ -51,7 +51,7 @@ impl Fernet {
             Err(_err) => Err(exc::DecryptionError::new_err(
                 "Decryption failed, token or key invalid.",
             )),
-            Ok(data) => Ok(PyBytes::new(py, &data).upcast()),
+            Ok(data) => Ok(PyBytes::new(py, &data).cast()),
         }
     }
 }
@@ -78,7 +78,7 @@ impl MultiFernet {
             Err(_err) => Err(exc::DecryptionError::new_err(
                 "Decryption failed, token or key invalid.",
             )),
-            Ok(data) => Ok(PyBytes::new(py, &data).upcast()),
+            Ok(data) => Ok(PyBytes::new(py, &data).cast()),
         }
     }
 }
