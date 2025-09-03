@@ -22,12 +22,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache built wheels
-        uses: actions/cache@v4
-        with:
-          path: target/wheels
-          key: wheels-rfernet-${{ github.sha }}
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip wheel twine
@@ -68,26 +62,10 @@ jobs:
         run: |
           pytest tests/
 
-  upload_all_wheels:
-    name: Collect and upload all wheels
-    needs: release_windows_fast
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Restore cached wheels
-        uses: actions/cache@v4
-        with:
-          path: target/wheels
-          key: wheels-rfernet-${{ github.sha }}
-          restore-keys: |
-            wheels-rfernet-
-
       - name: Upload all wheels
         uses: actions/upload-artifact@v4
         with:
-          name: rfernet-all-windows-wheels
+          name: rfernet-${{ matrix.python-version }}
           path: ./target/wheels/*.whl
 
       - name: Update GitHub Release
