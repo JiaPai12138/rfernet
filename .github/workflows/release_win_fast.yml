@@ -3,9 +3,6 @@ on:
   workflow_dispatch:
   release:
     types: [published, edited]
-  push:
-    tags:
-      - '*.*.*'
 
 
 jobs:
@@ -14,11 +11,11 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,19 +33,27 @@ jobs:
           python -m pip install --upgrade pip wheel twine
           pip install -r requirements.txt
 
-      - name: Checkout OpenSSL precompiled binaries
-        uses: actions/checkout@v4
-        with:
-          repository: JiaPai12138/OpenSSL-Win64-Bin
-          path: OpenSSL-Win64
-          ref: main
+      - name: Get latest release
+        id: release
+        shell: bash
+        run: |
+          response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/JiaPai12138/OpenSSL-Win64-Static-Builds/releases/latest)
+
+          if echo "$response" | grep -q "Not Found"; then
+            echo "Release not found"
+          else
+            tag=$(echo "$response" | jq -r .tag_name)
+            curl -L -o openssl-static.7z \
+            https://github.com/JiaPai12138/OpenSSL-Win64-Static-Builds/releases/download/$tag/openssl-static.7z
+
+            7z x openssl-static.7z -o${{ github.workspace }}/OpenSSL-Win64/
+          fi
 
       - name: Set env for openssl-sys (Windows)
-        if: matrix.os == 'windows-latest'
         run: |
-          echo "OPENSSL_LIB_DIR=${{ github.workspace }}/OpenSSL-Win64/lib/VC/x64/MT" >> $env:GITHUB_ENV
+          echo "OPENSSL_LIB_DIR=${{ github.workspace }}/OpenSSL-Win64/lib/" >> $env:GITHUB_ENV
           echo "OPENSSL_INCLUDE_DIR=${{ github.workspace }}/OpenSSL-Win64/include" >> $env:GITHUB_ENV
-          echo "${{ github.workspace }}/OpenSSL-Win64/bin" >> $GITHUB_PATH
 
       - name: Build wheels with maturin
         run: |
@@ -68,7 +73,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Restore cached wheels
         uses: actions/cache@v4
