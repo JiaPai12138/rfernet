@@ -12,7 +12,7 @@ jobs:
     name: Rustfmt + Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: 'clippy, rustfmt'
@@ -24,10 +24,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -47,10 +47,10 @@ jobs:
       runs-on: ubuntu-latest
       strategy:
         matrix:
-          python-path: ['cp39-cp39', 'cp310-cp310', 'cp311-cp311', 'cp312-cp312', 'cp313-cp313']
+          python-path: ['cp39-cp39', 'cp310-cp310', 'cp311-cp311', 'cp312-cp312', 'cp313-cp313', 'cp313-cp313t']
       container: quay.io/pypa/manylinux_2_28_x86_64:latest
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - uses: dtolnay/rust-toolchain@stable
           with:
             targets: x86_64-unknown-linux-gnu
@@ -68,10 +68,10 @@ jobs:
       runs-on: ubuntu-24.04-arm
       strategy:
         matrix:
-          python-path: ['cp39-cp39', 'cp310-cp310', 'cp311-cp311', 'cp312-cp312', 'cp313-cp313']
+          python-path: ['cp39-cp39', 'cp310-cp310', 'cp311-cp311', 'cp312-cp312', 'cp313-cp313', 'cp313-cp313t']
       container: quay.io/pypa/manylinux_2_28_aarch64:latest
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - uses: dtolnay/rust-toolchain@stable
           with:
             targets: aarch64-unknown-linux-gnu
@@ -88,11 +88,11 @@ jobs:
     name: Test macOS release build
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
         target-arch: ['aarch64-apple-darwin']
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target-arch }}

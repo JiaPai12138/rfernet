@@ -4,18 +4,19 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-      day: "sunday"
-      time: "06:00"
     commit-message:
       prefix: "chore"
-    versioning-strategy: "auto"
 
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "sunday"
-      time: "06:00"
     commit-message:
       prefix: "chore"
-    versioning-strategy: "auto"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"

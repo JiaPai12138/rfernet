@@ -3,153 +3,91 @@ on:
   workflow_dispatch:
   release:
     types: [published, edited]
-  push:
-    tags:
-      - '*.*.*'
 
 
 jobs:
-  release_windows:
-    name: Release Windows (x86_64)
+  release_windows_fast:
+    name: Build ${{ matrix.os }} Py${{ matrix.python-version }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
+    runs-on: ${{ matrix.os }}
 
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache built wheels
+        uses: actions/cache@v4
+        with:
+          path: target/wheels
+          key: wheels-rfernet-${{ github.sha }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel twine
+          pip install -r requirements.txt
+
+      - name: Get latest release
+        id: release
+        shell: bash
+        run: |
+          response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/JiaPai12138/OpenSSL-Win64-Static-Builds/releases/latest)
+
+          if echo "$response" | grep -q "Not Found"; then
+            echo "Release not found"
+          else
+            tag=$(echo "$response" | jq -r .tag_name)
+            curl -L -o openssl-static.7z \
+            https://github.com/JiaPai12138/OpenSSL-Win64-Static-Builds/releases/download/$tag/openssl-static.7z
+
+            7z x openssl-static.7z
+            ls -R "${{ github.workspace }}/"
+          fi
+
+      - name: Set env for openssl-sys (Windows)
+        run: |
+          echo "OPENSSL_LIB_DIR=${{ github.workspace }}/openssl_x64-windows-static-md/lib/" >> $env:GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=${{ github.workspace }}/openssl_x64-windows-static-md/include" >> $env:GITHUB_ENV
+
+      - name: Build wheels with maturin
+        run: |
+          maturin build --release --strip -i python --target x86_64-pc-windows-msvc
+
+      - name: Install built package
+        run: |
+          pip install rfernet --no-index --find-links target/wheels
+
+      - name: Run tests
+        run: |
+          pytest tests/
+
+  upload_all_wheels:
+    name: Collect and upload all wheels
+    needs: release_windows_fast
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Install OpenSSL via vcpkg  # install just once
-        run: |
-          vcpkg install openssl:x64-windows-static-md
-          vcpkg integrate install
-
-#==================================================================
-
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v5
+      - name: Restore cached wheels
+        uses: actions/cache@v4
         with:
-          python-version: '3.9'
+          path: target/wheels
+          key: wheels-rfernet-${{ github.sha }}
+          restore-keys: |
+            wheels-rfernet-
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip wheel twine
-          pip install -r requirements.txt
-
-      - name: Build wheels with maturin
-        run: |
-          maturin build --release --strip -i python --target x86_64-pc-windows-msvc
-
-      - name: Install built package
-        run: |
-          pip install rfernet --no-index --find-links target/wheels
-
-      - name: Run tests
-        run: |
-          pytest tests/
-
-#==================================================================
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip wheel twine
-          pip install -r requirements.txt
-
-      - name: Build wheels with maturin
-        run: |
-          maturin build --release --strip -i python --target x86_64-pc-windows-msvc
-
-      - name: Install built package
-        run: |
-          pip install rfernet --no-index --find-links target/wheels
-
-      - name: Run tests
-        run: |
-          pytest tests/
-
-#==================================================================
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip wheel twine
-          pip install -r requirements.txt
-
-      - name: Build wheels with maturin
-        run: |
-          maturin build --release --strip -i python --target x86_64-pc-windows-msvc
-
-      - name: Install built package
-        run: |
-          pip install rfernet --no-index --find-links target/wheels
-
-      - name: Run tests
-        run: |
-          pytest tests/
-
-#==================================================================
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip wheel twine
-          pip install -r requirements.txt
-
-      - name: Build wheels with maturin
-        run: |
-          maturin build --release --strip -i python --target x86_64-pc-windows-msvc
-
-      - name: Install built package
-        run: |
-          pip install rfernet --no-index --find-links target/wheels
-
-      - name: Run tests
-        run: |
-          pytest tests/
-
-#==================================================================
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip wheel twine
-          pip install -r requirements.txt
-
-      - name: Build wheels with maturin
-        run: |
-          maturin build --release --strip -i python --target x86_64-pc-windows-msvc
-
-      - name: Install built package
-        run: |
-          pip install rfernet --no-index --find-links target/wheels
-
-      - name: Run tests
-        run: |
-          pytest tests/
-
-#==================================================================
-
-      - name: Upload combined wheels
+      - name: Upload all wheels
         uses: actions/upload-artifact@v4
         with:
-          name: rfernet-win-pack-all
+          name: rfernet-all-windows-wheels
           path: ./target/wheels/*.whl
 
       - name: Update GitHub Release
