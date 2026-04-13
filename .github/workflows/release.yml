@@ -38,7 +38,7 @@ jobs:
         run: .venv/bin/twine upload --non-interactive --skip-existing target/wheels/*
       - name: Update GitHub Release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.release.tag_name }}
           name: ${{ github.event.release.name }}
@@ -77,7 +77,7 @@ jobs:
         run: .venv/bin/twine upload --non-interactive --skip-existing target/wheels/*
       - name: Update GitHub Release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.release.tag_name }}
           name: ${{ github.event.release.name }}
@@ -117,7 +117,7 @@ jobs:
         run: twine upload --non-interactive --skip-existing target/wheels/*
       - name: Update GitHub Release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.release.tag_name }}
           name: ${{ github.event.release.name }}
